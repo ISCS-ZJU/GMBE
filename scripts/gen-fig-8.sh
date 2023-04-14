@@ -1,0 +1,34 @@
+#! /bin/bash
+if [ ! -d "./bin" ]
+then
+  mkdir ./bin
+fi
+
+if [ ! -f "./bin/MBE_GPU" ]  
+then
+  cd ./src || exit
+  mkdir build
+  cd build || exit
+  cmake .. -DGPU_TYPE=A100
+  mv MBE_GPU* ../../bin/
+  cd ../../
+fi
+dataset_names=(MovieLens Amazon Teams ActorMovies Wikipedia) # YouTube StackOverflow DBLP IMDB EuAll BookCrossing Github)
+dataset_abbs=(Mti WA TM AM WC) # YG SO Pa IM EE BX GH)
+dataset_num=${#dataset_names[@]}
+data_file=./fig/optimization/optimization.data
+rm $data_file
+echo "# Serie no_prune WPT BPT adv" >> $data_file
+for ((i=0;i<dataset_num;i++)) 
+do
+  dataset_name=${dataset_names[i]}
+  dataset_abb=${dataset_abbs[i]}
+  printf "%s " "$dataset_abb" >> $data_file
+  dataset_file=./datasets/${dataset_name}.adj
+  timeout  2h ./bin/MBE_GPU_NOPRUNE -i "${dataset_file}" -s 4 -t 1 -o 1 -f | grep "Total processing time" | grep '[0-9.]*' -o | awk  'NR<=1 {printf "%s ", $0}' >> $data_file 
+  timeout  2h ./bin/MBE_GPU -i "${dataset_file}" -s 0 -t 1 -o 1 -f | grep "Total processing time" | grep '[0-9.]*' -o | awk  'NR<=1 {printf "%s ", $0}'   >> $data_file
+  timeout  2h ./bin/MBE_GPU -i "${dataset_file}" -s 1 -t 1 -o 1 -f | grep "Total processing time" | grep '[0-9.]*' -o | awk  'NR<=1 {printf "%s ", $0}'  >> $data_file
+  timeout  2h ./bin/MBE_GPU -i "${dataset_file}" -s 4 -t 1 -o 1 -f | grep "Total processing time" | grep '[0-9.]*' -o | awk  'NR<=1 {printf "%s ", $0}'  >> $data_file
+  echo >> $data_file
+done
+
