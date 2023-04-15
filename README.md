@@ -25,6 +25,7 @@ A machine with GPUs.
 - cmake 3.22.0
 - CUDA toolkit 11.7
 - gcc/g++ 10.3.0
+- python 2.7.18
 ## Compiling
 Using the following commands, one can easily compile the GMBE. The generated executable file is located at `bin/MBE_GPU`.
 ```
@@ -38,7 +39,7 @@ bash ./scripts/compile-GMBE.sh [GPU_TYPE]
 
 ## Dataset preparing
 For convenience, we provide a script to download and preprocess datasets. You can run the following command and you will find 
-the preprocessed datasets under the new directory datasets/. 
+the preprocessed datasets under the new directory `datasets/`. 
 ```
 bash ./preprocess/prepare_dataset.sh
 ```
@@ -53,4 +54,24 @@ You can run GMBE with the following command-line options.
  -x: Number of GPUs used to run GMBE, only useful in the multi-GPUs version.
  -m: bound_height, default 20.
  -n: bound_size, default 1500.
+```
+
+## Experimental workflow
+We provide the scripts to generate the experimental results of Figure 6, Figure 8 and Figure 13 in the directory `scripts/`. You can execute the scripts as following.
+```
+# Running on a machine with a 96-core CPU and a GPU
+bash ./scripts/gen-fig-6.sh
+
+# Running on a machine with a GPU
+bash ./scripts/gen-fig-8.sh
+
+# Running on a machine with 8 GPUs
+bash ./scripts/gen-fig-13.sh
+```
+We provide the script to generate figures in the directory `fig/`. You can execute the script as following.
+```
+cd fig/
+bash genfig.sh
+
+# Then you will find the figures under the directory fig/.
 ```
