@@ -45,13 +45,16 @@ then
   mv mbe_test ../../../bin/
   cd ../../../
 fi
-
 dataset_names=(MovieLens Amazon Teams ActorMovies Wikipedia YouTube StackOverflow DBLP IMDB EuAll BookCrossing Github)
 dataset_abbs=(Mti WA TM AM WC YG SO Pa IM EE BX GH)
 dataset_num=${#dataset_names[@]}
 
 
-# figure 6: running on a machine with 96-core CPUs and a GPU 
+# figure 6: running on a machine with 96-core CPUs and a GPU
+result_file="./scripts/results.txt"
+progress_file="./scripts/progress.txt"
+cur_time=$(date "+%Y-%m-%d %H:%M:%S")
+echo $cur_time "Generating fig-6. The expected time is 24000s." >> $progress_file
 data_file=./fig/overall/overall.data
 rm $data_file
 echo "# Serie oombe parmbe gmbe" >> $data_file
@@ -60,8 +63,14 @@ do
   dataset_name=${dataset_names[i]}
   dataset_abb=${dataset_abbs[i]}
   printf "%s " "$dataset_abb" >> $data_file
-  ./bin/mbbp "./datesets/${dataset_name}.graph" | grep "Total processing time" | grep '[0-9.]*' -o | awk 'NR<=1 {printf "%s ", $0 }' >> $data_file 
-  ./bin/mbe_test "./datasets/${dataset_name}.graph" 96 | grep "Total processing time" | grep '[0-9.]*' -o | awk 'NR<=1 {printf "%s ", $0}' >> $data_file 
-  ./bin/MBE_GPU -i "./datasets/${dataset_name}.adj" -s 4 -t 1 -o 1 -f | grep "Total processing time" | grep '[0-9.]*' -o | awk  'NR<=1 {printf "%s ", $0}'  >> $data_file
+  cur_time=$(date "+%Y-%m-%d %H:%M:%S")
+  echo $cur_time "Running ooMBEA on dataset" ${dataset_name} >> $progress_file
+  ./bin/mbbp "./datesets/${dataset_name}.graph" | tee ${result_file} | grep "Total processing time" | grep '[0-9.]*' -o | awk 'NR<=1 {printf "%s ", $0 }' >> $data_file 
+  cur_time=$(date "+%Y-%m-%d %H:%M:%S")
+  echo $cur_time "Running PARMBE on dataset" ${dataset_name} >> $progress_file
+  ./bin/mbe_test "./datasets/${dataset_name}.graph" 96 | tee ${result_file} | grep "Total processing time" | grep '[0-9.]*' -o | awk 'NR<=1 {printf "%s ", $0}' >> $data_file 
+  cur_time=$(date "+%Y-%m-%d %H:%M:%S")
+  echo $cur_time "Running GMBE on dataset" ${dataset_name} >> $progress_file
+  ./bin/MBE_GPU -i "./datasets/${dataset_name}.adj" -s 4 -t 1 -o 1 -f | tee ${result_file} | grep "Total processing time" | grep '[0-9.]*' -o | awk  'NR<=1 {printf "%s ", $0}'  >> $data_file
   echo >> $data_file
 done

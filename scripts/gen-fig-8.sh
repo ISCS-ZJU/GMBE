@@ -13,22 +13,37 @@ then
   mv MBE_GPU* ../../bin/
   cd ../../
 fi
+
 dataset_names=(MovieLens Amazon Teams ActorMovies Wikipedia) # YouTube StackOverflow DBLP IMDB EuAll BookCrossing Github)
 dataset_abbs=(Mti WA TM AM WC) # YG SO Pa IM EE BX GH)
 dataset_num=${#dataset_names[@]}
 data_file=./fig/optimization/optimization.data
 rm $data_file
 echo "# Serie no_prune WPT BPT adv" >> $data_file
+
+result_file="./scripts/results.txt"
+progress_file="./scripts/progress.txt"
+cur_time=$(date "+%Y-%m-%d %H:%M:%S")
+echo $cur_time "Generating fig-6. The expected time is 24000s." >> $progress_file
+
 for ((i=0;i<dataset_num;i++)) 
 do
   dataset_name=${dataset_names[i]}
   dataset_abb=${dataset_abbs[i]}
   printf "%s " "$dataset_abb" >> $data_file
   dataset_file=./datasets/${dataset_name}.adj
-  timeout  2h ./bin/MBE_GPU_NOPRUNE -i "${dataset_file}" -s 4 -t 1 -o 1 -f | grep "Total processing time" | grep '[0-9.]*' -o | awk  'NR<=1 {printf "%s ", $0}' >> $data_file 
-  timeout  2h ./bin/MBE_GPU -i "${dataset_file}" -s 0 -t 1 -o 1 -f | grep "Total processing time" | grep '[0-9.]*' -o | awk  'NR<=1 {printf "%s ", $0}'   >> $data_file
-  timeout  2h ./bin/MBE_GPU -i "${dataset_file}" -s 1 -t 1 -o 1 -f | grep "Total processing time" | grep '[0-9.]*' -o | awk  'NR<=1 {printf "%s ", $0}'  >> $data_file
-  timeout  2h ./bin/MBE_GPU -i "${dataset_file}" -s 4 -t 1 -o 1 -f | grep "Total processing time" | grep '[0-9.]*' -o | awk  'NR<=1 {printf "%s ", $0}'  >> $data_file
+  cur_time=$(date "+%Y-%m-%d %H:%M:%S")
+  echo $cur_time "Running GMBE-W/O PRUNE on " ${dataset_name} >> $progress_file
+  timeout  2h ./bin/MBE_GPU_NOPRUNE -i "${dataset_file}" -s 4 -t 1 -o 1 -f | tee ${result_file} | grep "Total processing time" | grep '[0-9.]*' -o | awk  'NR<=1 {printf "%s ", $0}' >> $data_file 
+  cur_time=$(date "+%Y-%m-%d %H:%M:%S")
+  echo $cur_time "Running GMBE-WARP on " ${dataset_name} >> $progress_file
+  timeout  2h ./bin/MBE_GPU -i "${dataset_file}" -s 0 -t 1 -o 1 -f | tee ${result_file} | grep "Total processing time" | grep '[0-9.]*' -o | awk  'NR<=1 {printf "%s ", $0}'   >> $data_file
+  cur_time=$(date "+%Y-%m-%d %H:%M:%S")
+  echo $cur_time "Running GMBE-BLOCK on " ${dataset_name} >> $progress_file
+  timeout  2h ./bin/MBE_GPU -i "${dataset_file}" -s 1 -t 1 -o 1 -f | tee ${result_file} | grep "Total processing time" | grep '[0-9.]*' -o | awk  'NR<=1 {printf "%s ", $0}'  >> $data_file
+  cur_time=$(date "+%Y-%m-%d %H:%M:%S")
+  echo $cur_time "Running GMBE on " ${dataset_name} >> $progress_file
+  timeout  2h ./bin/MBE_GPU -i "${dataset_file}" -s 4 -t 1 -o 1 -f | tee ${result_file} | grep "Total processing time" | grep '[0-9.]*' -o | awk  'NR<=1 {printf "%s ", $0}'  >> $data_file
   echo >> $data_file
 done
 
