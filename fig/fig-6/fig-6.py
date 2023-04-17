@@ -14,7 +14,7 @@ c = canvas(ctype, title='fig-6', dimensions=[700, 150])
 
 ######################################real_time#################################
 
-t = table(file='overall.data')
+t = table(file='fig-6.data')
 d = drawable(canvas=c, xrange=[-0.6, t.getmax('rownumber')+0.6],
              yrange=[0.002, 300000], dimensions=[pictureWidthLong, 100], coord=[30,30], yscale='log10')
 

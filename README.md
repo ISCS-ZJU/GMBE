@@ -31,6 +31,7 @@ Using the following commands, one can easily compile the GMBE. The generated exe
 ```
 ## Get source code
 git clone --recursive
+cd MBE-GPU
 
 ## compiling with specific GPU type. If your GPU is A100, V100 and 2080TI, you can replace [GPU_TYPE] with the specific GPU type,
 ## otherwise you should revise the file CMakeLists.txt under the directory src/ to support your GPU.  

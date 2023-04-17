@@ -10,6 +10,7 @@ then
   mkdir build
   cd build || exit
   cmake .. -DGPU_TYPE=A100
+  make
   mv MBE_GPU* ../../bin/
   cd ../../
 fi
@@ -55,7 +56,7 @@ result_file="./scripts/results.txt"
 progress_file="./scripts/progress.txt"
 cur_time=$(date "+%Y-%m-%d %H:%M:%S")
 echo $cur_time "Generating fig-6. The expected time is 24000s." >> $progress_file
-data_file=./fig/overall/overall.data
+data_file=./fig/fig-6/fig-6.data
 rm $data_file
 echo "# Serie oombe parmbe gmbe" >> $data_file
 for ((i=0;i<dataset_num;i++)) 
@@ -65,12 +66,12 @@ do
   printf "%s " "$dataset_abb" >> $data_file
   cur_time=$(date "+%Y-%m-%d %H:%M:%S")
   echo $cur_time "Running ooMBEA on dataset" ${dataset_name} >> $progress_file
-  ./bin/mbbp "./datesets/${dataset_name}.graph" | tee ${result_file} | grep "Total processing time" | grep '[0-9.]*' -o | awk 'NR<=1 {printf "%s ", $0 }' >> $data_file 
+  ./bin/mbbp "./datasets/${dataset_name}.graph" | tee -a ${result_file} | grep "Total processing time" | grep '[0-9.]*' -o | awk 'NR<=1 {printf "%s ", $0 }' >> $data_file 
   cur_time=$(date "+%Y-%m-%d %H:%M:%S")
   echo $cur_time "Running PARMBE on dataset" ${dataset_name} >> $progress_file
-  ./bin/mbe_test "./datasets/${dataset_name}.graph" 96 | tee ${result_file} | grep "Total processing time" | grep '[0-9.]*' -o | awk 'NR<=1 {printf "%s ", $0}' >> $data_file 
+  ./bin/mbe_test "./datasets/${dataset_name}.graph" 96 | tee -a ${result_file} | grep "Total processing time" | grep '[0-9.]*' -o | awk 'NR<=1 {printf "%s ", $0}' >> $data_file 
   cur_time=$(date "+%Y-%m-%d %H:%M:%S")
   echo $cur_time "Running GMBE on dataset" ${dataset_name} >> $progress_file
-  ./bin/MBE_GPU -i "./datasets/${dataset_name}.adj" -s 4 -t 1 -o 1 -f | tee ${result_file} | grep "Total processing time" | grep '[0-9.]*' -o | awk  'NR<=1 {printf "%s ", $0}'  >> $data_file
+  ./bin/MBE_GPU -i "./datasets/${dataset_name}.adj" -s 4 -t 1 -o 1 -f | tee -a ${result_file} | grep "Total processing time" | grep '[0-9.]*' -o | awk  'NR<=1 {printf "%s ", $0}'  >> $data_file
   echo >> $data_file
 done
