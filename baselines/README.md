@@ -8,6 +8,18 @@ bash ./scripts/compile-baselines.sh
 ```
 
 # Running
+You can run MBEA with the following command.
+```
+./bin/MBE -i [dataset_path] -s 0
+```
+You can run iMBEA with the following command.
+```
+./bin/MBE -i [dataset_path] -s 1
+```
+You can run PMBE with the following command.
+```
+./bin/MBE -i [dataset_path] -s 2
+```
 You can run PARMBE with the following command.
 ```
 ./bin/mbe_test [dataset_path] [thread_num]

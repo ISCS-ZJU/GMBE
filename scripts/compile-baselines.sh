@@ -35,3 +35,19 @@ then
   cd ../../../
 fi
 
+if [ ! -f "./bin/MBE" ]
+then
+  cd ./baselines || exit
+  if [ ! -d "./MBE" ]
+  then
+    unzip -q MBE.zip
+  fi
+  cd MBE || exit
+  mkdir build
+  cd build 
+  cmake ..
+  make
+  mv MBE ../../../bin/
+  cd ../../../
+fi
+
