@@ -25,6 +25,7 @@ class IterFinderGpu : public BicliqueFinder {
  protected:
   CSRBiGraph *graph_gpu_;
   int *dev_global_buffer_, *dev_mb_, *dev_processing_vertex_;
+  double clock_rate;
   unsigned long long* total_clock_initialize, *total_clock_queue, *total_clock_generate_tiny, *total_clock_iterate, *dev_total_clock;
 };
 

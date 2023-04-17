@@ -1,8 +1,15 @@
-# /bin/bash
-#runing on a machine with 8 V100
+#! /bin/bash
+#runing on a machine with 8 GPUs 
 if [ ! -d "./bin" ]
 then
   mkdir ./bin
+fi
+
+if [ $# -eq 0 ]
+then 
+  gpu_type=V100
+else 
+  gpu_type=$1
 fi
 
 if [ ! -f "./bin/MBE_GPU" ]  
@@ -10,7 +17,7 @@ then
   cd ./src || exit
   mkdir build
   cd build || exit
-  cmake .. -DGPU_TYPE=A100
+  cmake .. -DGPU_TYPE=${gpu_type}
   make
   mv MBE_GPU* ../../bin/
   cd ../../
@@ -22,7 +29,7 @@ dataset_num=${#dataset_names[@]}
 progress_file="./scripts/progress.txt"
 result_file="./scripts/results.txt"
 cur_time=$(date "+%Y-%m-%d %H:%M:%S")
-echo $cur_time "Generating fig-6. The expected time is 24000s." >> $progress_file
+echo $cur_time "Generating fig-13. The expected time is 830s." | tee -a $progress_file
 # figure 13: running on multi-GPUs
 for ((i=0;i<dataset_num;i++)) 
 do
@@ -34,32 +41,33 @@ do
   echo "# Serie gpu0" >> "$data_file"
   printf "%s " 0 >> "$data_file" 
   cur_time=$(date "+%Y-%m-%d %H:%M:%S")
-  echo $cur_time "Running GMBE on " ${dataset_name} "with one GPU" >> $progress_file
-  ./bin/MBE_GPU -i "${dataset_file}" -s 5 -t 1 -o 1 -x 1 -f | tee -a ${result_file} | grep "Processing time of gpu" | awk -F ':' '{printf "%s \n", $2}' | grep '[0-9.]*' -o | sort -n | awk  '{printf "%s ", $0}'  >> "$data_file"
+  echo $cur_time "Running GMBE on " ${dataset_name} "with one GPU" | tee -a $progress_file
+  ./bin/MBE_GPU -i "${dataset_file}" -s 3 -t 1 -o 1 -x 1 -f | tee -a ${result_file} | grep "Processing time of gpu" | awk -F ':' '{printf "%s \n", $2}' | grep '[0-9.]*' -o | sort -n | awk  '{printf "%s ", $0}'  >> "$data_file"
   
   data_file=./fig/fig-13/${dataset_name}/two_gpu.data
   rm "$data_file"
   echo "# Serie gpu0 gpu1" >> "$data_file"
   printf "%s " 1 >> "$data_file" 
   cur_time=$(date "+%Y-%m-%d %H:%M:%S")
-  echo $cur_time "Running GMBE on " ${dataset_name} "with two GPUs" >> $progress_file
-  ./bin/MBE_GPU -i "${dataset_file}" -s 5 -t 1 -o 1 -x 2 -f | tee -a ${result_file} | grep "Processing time of gpu" | awk -F ':' '{printf "%s \n", $2}' | grep '[0-9.]*' -o | sort -n | awk  '{printf "%s ", $0}'  >> "$data_file"
+  echo $cur_time "Running GMBE on " ${dataset_name} "with two GPUs" | tee -a $progress_file
+
+  ./bin/MBE_GPU -i "${dataset_file}" -s 3 -t 1 -o 1 -x 2 -f | tee -a ${result_file} | grep "Processing time of gpu" | awk -F ':' '{printf "%s \n", $2}' | grep '[0-9.]*' -o | sort -n | awk  '{printf "%s ", $0}'  >> "$data_file"
   
   data_file=./fig/fig-13/${dataset_name}/four_gpu.data
   rm "$data_file"
   echo "# Serie gpu0 gpu1 gpu2 gpu3" >> "$data_file"
   printf "%s " 2 >> "$data_file" 
   cur_time=$(date "+%Y-%m-%d %H:%M:%S")
-  echo $cur_time "Running GMBE on " ${dataset_name} "with four GPUs" >> $progress_file
-  ./bin/MBE_GPU -i "${dataset_file}" -s 5 -t 1 -o 1 -x 4 -f | tee -a ${result_file} | grep "Processing time of gpu" | awk -F ':' '{printf "%s \n", $2}' | grep '[0-9.]*' -o | sort -n | awk  '{printf "%s ", $0}'  >> "$data_file"
+  echo $cur_time "Running GMBE on " ${dataset_name} "with four GPUs" | tee -a $progress_file
+  ./bin/MBE_GPU -i "${dataset_file}" -s 3 -t 1 -o 1 -x 4 -f | tee -a ${result_file} | grep "Processing time of gpu" | awk -F ':' '{printf "%s \n", $2}' | grep '[0-9.]*' -o | sort -n | awk  '{printf "%s ", $0}'  >> "$data_file"
 
   data_file=./fig/fig-13/${dataset_name}/eight_gpu.data
   rm "$data_file"
   echo "# Serie gpu0 gpu1 gpu2 gpu3 gpu4 gpu5 gpu6 gpu7" >> "$data_file"
   printf "%s " 3.2 >> "$data_file" 
   cur_time=$(date "+%Y-%m-%d %H:%M:%S")
-  echo $cur_time "Running GMBE on " ${dataset_name} "with eight GPUs" >> $progress_file
-  ./bin/MBE_GPU -i "${dataset_file}" -s 5 -t 1 -o 1 -x 8 -f | tee -a ${result_file} | grep "Processing time of gpu" | awk -F ':' '{printf "%s \n", $2}' | grep '[0-9.]*' -o | sort -n | awk  '{printf "%s ", $0}'  >> "$data_file"
+  echo $cur_time "Running GMBE on " ${dataset_name} "with eight GPUs" | tee -a $progress_file
+  ./bin/MBE_GPU -i "${dataset_file}" -s 3 -t 1 -o 1 -x 8 -f | tee -a ${result_file} | grep "Processing time of gpu" | awk -F ':' '{printf "%s \n", $2}' | grep '[0-9.]*' -o | sort -n | awk  '{printf "%s ", $0}'  >> "$data_file"
   #cd ./fig/multi_scalability/$dataset_name
   #make 
   #cd - 

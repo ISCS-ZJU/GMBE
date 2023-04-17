@@ -4,10 +4,8 @@
 #include <queue>
 #include <algorithm>
 
-//#define LARGE_SHRESHOLD 2500
-//#define COST_FUNC(csize, nid, lsize) (csize - nid) * lsize > LARGE_SHRESHOLD
-//#define COST_FUNC(csize, nid, lsize) ((csize - nid) > LARGE_SHRESHOLD || lsize > LARGE_SHRESHOLD) 
-//#define COST_FUNC(csize, nid, lsize) (((csize - nid) > 20 || lsize > 20) && (csize - nid) * lsize > 1500 )
+extern bool printSMTime;
+
 #define SHARED_CACHE_SIZE 0x1000
 #define BUFFER_PER_WARP (2 * MAX_DEGREE_BOUND + 2 * MAX_2_H_DEGREE_BOUND)
 
@@ -73,12 +71,9 @@ __device__ __forceinline__ void IterProcess(CSRBiGraph &graph, int *L_vertices,
 __launch_bounds__(32 * WARP_PER_SM, 1) __global__
     void IterFinderKernel(CSRBiGraph graph, int *global_buffer,
                           int *maximal_bicliques, int *processing_vertex,
-                          unsigned long long *total_clock_initialize, 
-                          unsigned long long *total_clock_iterate,
-                          unsigned long long *total_clock
+                          double clock_rate = 0
                           ) {
-  //__shared__ int cache[SHARED_CACHE_SIZE];
-  auto clock_start = clock64();
+  auto sm_start = clock64();
   int warp_id = (blockIdx.x * blockDim.x + threadIdx.x) / warpSize;
   // int num_warps = WARP_PER_BLOCK * gridDim.x;
   int *warp_buffer = global_buffer + BUFFER_PER_WARP * warp_id;
@@ -98,10 +93,8 @@ __launch_bounds__(32 * WARP_PER_SM, 1) __global__
   int C_size;
 
   int cur_vertex;
-  unsigned long long clock_initialize = 0, clock_iterate = 0;
 
   while (true) {
-    auto initialize_start = clock64();
     if (get_lane_id() == 0)
       cur_vertex = graph.V_size - 1 - atomicAdd(processing_vertex, 1);
     cur_vertex = get_value_from_lane_x(cur_vertex);
@@ -118,7 +111,6 @@ __launch_bounds__(32 * WARP_PER_SM, 1) __global__
         int *base_0 = graph.rev_column_indices + graph.rev_row_offset[u0];
         if (base_0[0] == cur_vertex) local_mb_counter++;
       }
-      clock_initialize += clock64() - initialize_start;
     } else {
       // step 2: initialize R set and maximality check
       int *R_vertices = exe_stack;
@@ -165,26 +157,22 @@ __launch_bounds__(32 * WARP_PER_SM, 1) __global__
             seq_intersect_warp_for_iter_finder(C_vertices, C_level_neighbors,
                                                C_size, base_0, size_0);
           }
-          clock_initialize += clock64() - initialize_start;
 
-          auto iterate_start = clock64();
           IterProcess(graph, L_vertices, L_level, L_size, C_vertices,
                       C_level_neighbors, C_size, exe_stack, first_level_cand_id,
                       local_mb_counter);
-          clock_iterate += clock64() - iterate_start;
         }
       }
     }
-  }
-  if (get_lane_id() == 0) {
-    atomicAdd(total_clock_initialize, clock_initialize);
-    atomicAdd(total_clock_iterate, clock_iterate);
-    atomicAdd(total_clock, clock64() - clock_start);
   }
   if (get_lane_id() == 0 && local_mb_counter != 0)
     atomicAdd(maximal_bicliques, local_mb_counter);
   // if (get_lane_id() == 0) printf("%4d\t", warp_id);
   __syncthreads();
+  unsigned long long sm_end = clock64();
+  if (threadIdx.x == 0 && clock_rate != 0) {
+    printf("SM exit: %lf\n", (sm_end - sm_start) / 1000.0 / clock_rate);
+  }
   if (threadIdx.x == 0) {
     //printf("sm end. now maximal_bicliques is %d\n", *maximal_bicliques);
   }
@@ -196,22 +184,20 @@ IterFinderGpu::IterFinderGpu(CSRBiGraph *graph_in) : BicliqueFinder(graph_in) {
   graph_gpu_->CopyToGpu(*graph_in);
   gpuErrchk(cudaMalloc((void **)&dev_mb_, sizeof(int)));
   gpuErrchk(cudaMalloc((void **)&dev_processing_vertex_, sizeof(int)));
-  gpuErrchk(cudaMalloc((void**)&total_clock_initialize, sizeof(unsigned long long)));
-  gpuErrchk(cudaMalloc((void**)&total_clock_queue, sizeof(unsigned long long)));
-  gpuErrchk(cudaMalloc((void**)&total_clock_generate_tiny, sizeof(unsigned long long)));
-  gpuErrchk(cudaMalloc((void**)&total_clock_iterate, sizeof(unsigned long long)));
-  gpuErrchk(cudaMalloc((void**)&dev_total_clock, sizeof(unsigned long long)));
   size_t g_size = (size_t)MAX_BLOCKS * WARP_PER_BLOCK * BUFFER_PER_WARP;
   gpuErrchk(cudaMalloc((void **)&dev_global_buffer_, g_size * sizeof(int)));
   maximal_nodes_ = 0;
   gpuErrchk(cudaMemset(dev_mb_, 0, sizeof(int)));
   gpuErrchk(cudaMemset(dev_processing_vertex_, 0, sizeof(int)));
   gpuErrchk(cudaMemset(dev_global_buffer_, 0, g_size * sizeof(int)));
-  gpuErrchk(cudaMemset(total_clock_initialize, 0, sizeof(unsigned long long)));
-  gpuErrchk(cudaMemset(total_clock_queue, 0, sizeof(unsigned long long)));
-  gpuErrchk(cudaMemset(total_clock_generate_tiny, 0, sizeof(unsigned long long)));
-  gpuErrchk(cudaMemset(total_clock_iterate, 0, sizeof(unsigned long long)));
-  gpuErrchk(cudaMemset(dev_total_clock, 0, sizeof(unsigned long long)));
+
+  cudaDeviceProp dev;
+  cudaGetDeviceProperties(&dev, 0);
+  if (printSMTime) {
+    clock_rate = dev.clockRate;
+  } else {
+    clock_rate = 0;
+  }
 }
 
 IterFinderGpu::~IterFinderGpu() {
@@ -224,20 +210,12 @@ IterFinderGpu::~IterFinderGpu() {
 
 void IterFinderGpu::Execute() {
   start_time_ = get_cur_time();
-  unsigned long long clock_initialize, clock_iterate, host_total_clock;
   IterFinderKernel<<<MAX_BLOCKS, WARP_PER_BLOCK * 32>>>(
-      *graph_gpu_, dev_global_buffer_, dev_mb_, dev_processing_vertex_,
-    total_clock_initialize, total_clock_iterate, dev_total_clock);
+      *graph_gpu_, dev_global_buffer_, dev_mb_, dev_processing_vertex_, clock_rate);
   gpuErrchk(cudaGetLastError());
   gpuErrchk(cudaDeviceSynchronize());
   gpuErrchk(cudaMemcpy(&maximal_nodes_, dev_mb_, sizeof(int),
                        cudaMemcpyDeviceToHost));
-  cudaMemcpy(&clock_initialize, total_clock_initialize, sizeof(unsigned long long), cudaMemcpyDeviceToHost);
-  cudaMemcpy(&clock_iterate, total_clock_iterate, sizeof(unsigned long long), cudaMemcpyDeviceToHost);
-  cudaMemcpy(&host_total_clock, dev_total_clock, sizeof(unsigned long long), cudaMemcpyDeviceToHost);
-  printf("initialize clock: %lld\n", clock_initialize);
-  printf("iterate clock: %lld\n", clock_iterate);
-  printf("other clock: %lld\n", host_total_clock - clock_initialize - clock_iterate);
   exe_time_ = get_cur_time() - start_time_;
 }
 
@@ -250,11 +228,9 @@ void IterFinderGpu::Execute() {
 __launch_bounds__(32 * WARP_PER_SM, 1) __global__
     void IterFinderKernel_2(CSRBiGraph graph, int *global_buffer,
                             int *maximal_bicliques, int *processing_vertex,
-                            unsigned long long *total_clock_initialize, 
-                            unsigned long long *total_clock_iterate,
-                            unsigned long long *total_clock
+                            double clock_rate = 0
                             ) {
-  auto clock_start = clock64();
+  auto sm_start = clock64();
   int warp_id = (blockIdx.x * blockDim.x + threadIdx.x) / warpSize;
   int *warp_buffer = global_buffer + BUFFER_PER_WARP_2 * warp_id +
                      SD_BUFFER_PER_BLOCK * (blockIdx.x + 1);
@@ -279,10 +255,7 @@ __launch_bounds__(32 * WARP_PER_SM, 1) __global__
   int second_id;
   int second_vertex;
 
-  unsigned long long clock_initialize = 0, clock_iterate = 0, clock_total = 0;
-
   while (true) {
-    auto clock_start = clock64();
     if (threadIdx.x == 0) {
       first_vertex = graph.V_size - 1 - atomicAdd(processing_vertex, 1);
       C_size_sd = 0;
@@ -290,7 +263,6 @@ __launch_bounds__(32 * WARP_PER_SM, 1) __global__
     if (threadIdx.x < 32) {
       __syncwarp();
       if(first_vertex >= 0){
-        auto initialize_start = clock64();
         // init L
         L_size =
             graph.row_offset[first_vertex + 1] - graph.row_offset[first_vertex];
@@ -337,21 +309,14 @@ __launch_bounds__(32 * WARP_PER_SM, 1) __global__
             }
           }
         }
-        clock_initialize += clock64() - initialize_start;
       }
     }
 
-    if(threadIdx.x == 0) {
-      //C_scanner_id_sd ++;
-    }
-    clock_total += clock64() - clock_start;
     __syncthreads();
     if (first_vertex < 0) break;
     if (C_size_sd == 0) continue;
 
-    clock_start = clock64();
     while (true) {
-      auto initialize_start = clock64();
       if (get_lane_id() == 0) second_id = atomicAdd(&C_scanner_id_sd, 1);
       second_id = get_value_from_lane_x(second_id);
       if (second_id >= C_size_sd) break;
@@ -405,28 +370,21 @@ __launch_bounds__(32 * WARP_PER_SM, 1) __global__
 
       for (int i = get_lane_id(); i < L_size; i += warpSize) L_level[i] = 0;
 
-      clock_initialize += clock64() - initialize_start;
       auto iterate_start = clock64();
       IterProcess(graph, L_vertices, L_level, L_size, C_vertices,
                   C_level_neighbors, C_size, exe_stack, next_id,
                   local_mb_counter);
-      clock_iterate += clock64() - iterate_start;
     }
-    clock_total += clock64() - clock_start;
     __syncthreads();
-  }
-  if (get_lane_id() == 0) {
-    atomicAdd(total_clock_initialize, clock_initialize);
-    atomicAdd(total_clock_iterate, clock_iterate);
-    atomicAdd(total_clock, clock64() - clock_start);
   }
 
   if (get_lane_id() == 0 && local_mb_counter != 0)
     atomicAdd(maximal_bicliques, local_mb_counter);
   // if (get_lane_id() == 0) printf("%4d\t", warp_id);
   __syncthreads();
-  if (threadIdx.x == 0) {
-    //printf("sm end. now maximal_bicliques is %d\n", *maximal_bicliques);
+  unsigned long long sm_end = clock64();
+  if (threadIdx.x == 0 && clock_rate != 0) {
+    printf("SM exit: %lf\n", (sm_end - sm_start) / 1000.0 / clock_rate);
   }
 }
 
@@ -457,7 +415,7 @@ void IterFinderGpu2::Execute() {
   unsigned long long clock_initialize, clock_iterate, host_total_clock;
   IterFinderKernel_2<<<MAX_BLOCKS, WARP_PER_BLOCK * 32>>>(
     *graph_gpu_, dev_global_buffer_, dev_mb_, dev_processing_vertex_, 
-    total_clock_initialize, total_clock_iterate, dev_total_clock);
+    clock_rate);
   gpuErrchk(cudaGetLastError());
   gpuErrchk(cudaDeviceSynchronize());
   gpuErrchk(cudaMemcpy(&maximal_nodes_, dev_mb_, sizeof(int),
@@ -964,8 +922,9 @@ __launch_bounds__(32 * WARP_PER_SM, 1) __global__
                             unsigned long long *global_count, 
                             unsigned long long *large_count, unsigned long long *tiny_count,
                             unsigned long long *non_maximal,
-                            int bound_height, int bound_size
+                            int bound_height, int bound_size, double clock_rate = 0
                             ) {
+  unsigned long long sm_start = clock64(); 
   int warp_id = (blockIdx.x * blockDim.x + threadIdx.x) / warpSize;
   int *warp_buffer = global_buffer + (size_t)BUFFER_PER_WARP_2 * warp_id +
                      (size_t)SD_BUFFER_PER_BLOCK * (blockIdx.x + 1);
@@ -1076,6 +1035,10 @@ __launch_bounds__(32 * WARP_PER_SM, 1) __global__
     }
   }
   __syncthreads();
+  unsigned long long sm_end = clock64();
+  if (threadIdx.x == 0 && clock_rate != 0) {
+    printf("SM exit: %lf\n", (sm_end - sm_start) / 1000.0 / clock_rate);
+  }
   if (get_lane_id() == 0 && local_mb_counter != 0)  
   {
     /*printf("initialize clock: %lld\n", clock_initialize);
@@ -1141,8 +1104,7 @@ void IterFinderGpu6::Execute() {
   IterFinderKernel_6<<<MAX_BLOCKS, WARP_PER_BLOCK * 32>>>(
     *graph_gpu_, dev_global_buffer_, dev_mb_, dev_processing_vertex_,
        global_large_worklist, global_count, large_count, tiny_count,
-     non_maximal,
-    bound_height, bound_size);
+     non_maximal, bound_height, bound_size, clock_rate);
   int host_test;
   unsigned long long host_non_maximal;
   cudaMemcpy(&host_test, dev_test, sizeof(int), cudaMemcpyDeviceToHost);
@@ -1176,7 +1138,6 @@ __launch_bounds__(32 * WARP_PER_SM, 1) __global__
   volatile unsigned long long &lc = *large_count;
   volatile unsigned long long &tc = *tiny_count;
   volatile unsigned long long &fc = *first_count;
-  volatile int &pv = *processing_vertex;
 
   unsigned long long llc = 0;
   unsigned long long ltc = 0;

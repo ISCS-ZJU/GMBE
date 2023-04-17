@@ -22,6 +22,7 @@ void FinderTest(BicliqueFinder* finder = nullptr, char* fn = nullptr) {
   delete finder;
 }
 
+bool printSMTime = false;
 
 void GpuTest() {
   std::vector<int> array;
@@ -91,7 +92,7 @@ int main(int argc, char* argv[]) {
   int bound_size = 1500;
   char graph_name[80] = "db/Writers.adj";
 
-  while ((op = getopt(argc, argv, "h:m:n:x:i:s:t:o:f")) != -1) {
+  while ((op = getopt(argc, argv, "h:x:i:s:t:o:fp")) != -1) {
     switch (op) {
       case 'i':
         memcpy(graph_name, optarg, strlen(optarg) + 1);
@@ -117,6 +118,9 @@ int main(int argc, char* argv[]) {
       case 'x':
         ngpus = atoi(optarg);
         break;
+      case 'p':
+        printSMTime = true;
+        break;
     }
   }
   double start_t = get_cur_time();
@@ -136,12 +140,9 @@ int main(int argc, char* argv[]) {
       FinderTest(new IterFinderGpu2(graph));
       break;
     case 2:
-      FinderTest(new IterFinderGpu3(graph));
-      break;
-    case 4:
       FinderTest(new IterFinderGpu6(graph, bound_height, bound_size));
       break;
-    case 5:
+    case 3:
       FinderTest(new IterFinderGpu7(graph, ngpus));
       break;
   }
