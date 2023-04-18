@@ -83,6 +83,7 @@ bash ./scripts/gen-fig-11.sh [GPU_TYPE]
 # Running on three machine with A100, V100 and 2080Ti respectively. 
 # It is required to collect all the results in ./fig/fig-12/[GPU_TYPE].data 
 # on different machines into ./fig/fig-12/fig-12.data on a specific machine.
+# The README.md under fig/fig-12 specify the format of fig-12.data.
 bash ./scripts/gen-fig-12.sh [GPU_TYPE]
 
 # Running on a machine with 8 GPUs
@@ -100,4 +101,4 @@ To generate the experimental result of Table 2, you can execute the script as fo
 # Running on a machine with a GPU
 bash ./scripts/gen-table-2.sh [GPU_TYPE]
 ```
-Then you will find the experimental result under the directory `table`.
+Then you will find the experimental result under the directory `table/`.
