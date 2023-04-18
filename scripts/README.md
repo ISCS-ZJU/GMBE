@@ -1,6 +1,6 @@
 ## Abstract
 
-You can reproduce all experimental results (in Figure 6-13) with the scripts, which roughly match the figures from the paper. We provide scripts for Figure 6, Figure 8-11, and Figure 13. By default, scripts for Figure 6 and Figure 8-11 run on a machine with an NVIDIA A100 GPU. The script for Figure 13 runs on a machine with 8 NVIDIA V100 GPUs. Since Figure 7 is based on our empirical estimation of memory requirement,  we will detail it soon. Figure 12 shows the adaptability of GMBE on different GPUs. You may manually run GMBE on different GPUs and generate Figure 12 refer to the script for Figure 6.
+You can reproduce all experimental results (in Figure 6-13 and Table 2) with the scripts, which roughly match the figures from the paper. By default, scripts for Figures 6-11 and Table 2 run on a machine with an NVIDIA A100 GPU. The script for Figure 12 runs on an NVIDIA A100 GPU, an NVIDIA V100 GPU, and an NVIDIA 2080Ti GPU respectively. The script for Figure 13 runs on a machine with 8 NVIDIA V100 GPUs. Figure 7 is based on our empirical estimation of memory requirement, we will detail it as follows. 
 
 ## Generation for Figure 7
 
