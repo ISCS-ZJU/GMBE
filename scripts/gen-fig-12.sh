@@ -47,4 +47,4 @@ do
   timeout  2h ./bin/MBE_GPU -i "${dataset_file}" -s 2 -t 1 -o 1 -f | tee -a ${result_file} | grep "Total processing time" | grep '[0-9.]*' -o | awk  'NR<=1 {printf "%s ", $0}'  >> $data_file
   echo >> $data_file
 done
-echo $cure_time "Complete. Please collect all the results of different GPUs into one machine. The path of data file is ./fig/fig-12/GMBE-${gpu_type}.data. You should fill in ./fig/fig-12/fig-12.data with the results of A100, V100 and 2080Ti." | tee -a $progress_file
+echo $cur_time "Complete. Please collect all the results of different GPUs into one machine. The path of data file is ./fig/fig-12/GMBE-${gpu_type}.data. You should fill in ./fig/fig-12/fig-12.data with the results of A100, V100 and 2080Ti." | tee -a $progress_file

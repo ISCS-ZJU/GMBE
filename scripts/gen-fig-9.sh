@@ -42,7 +42,7 @@ do
   echo "0 108" >> "$data_file" 
   cur_time=$(date "+%Y-%m-%d %H:%M:%S")
   echo $cur_time "Running GMBE-WARP on " ${dataset_name} "to analyze load balance." | tee -a $progress_file
-  ./bin/MBE_GPU -i "${dataset_file}" -s 0 -t 1 -o 1 -f -p | tee -a ${result_file} | grep "SM exit" | awk -F ':' '{printf "%s \n", $2}' | grep '[0-9.]*' -o | awk 'BEGIN{sm_num=108}{printf "%s %d\n", $0, 108 - NR + 1;}'  >> "$data_file"
+  ./bin/MBE_GPU -i "${dataset_file}" -s 0 -t 1 -o 1 -f -p | tee -a ${result_file} | grep "SM exit" | awk -F ':' '{printf "%s \n", $2}' | grep '[0-9.]*' -o | awk '{printf "%s %d\n", $0, 109 - NR;}'  >> "$data_file"
   
   data_file=./fig/fig-9/${dataset_name}/block.data
   rm "$data_file"

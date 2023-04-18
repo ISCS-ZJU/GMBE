@@ -50,7 +50,6 @@ do
   printf "%s " 1 >> "$data_file" 
   cur_time=$(date "+%Y-%m-%d %H:%M:%S")
   echo $cur_time "Running GMBE on " ${dataset_name} "with two GPUs" | tee -a $progress_file
-
   ./bin/MBE_GPU -i "${dataset_file}" -s 3 -t 1 -o 1 -x 2 -f | tee -a ${result_file} | grep "Processing time of gpu" | awk -F ':' '{printf "%s \n", $2}' | grep '[0-9.]*' -o | sort -n | awk  '{printf "%s ", $0}'  >> "$data_file"
   
   data_file=./fig/fig-13/${dataset_name}/four_gpu.data
