@@ -22,6 +22,22 @@ then
   cd ../../
 fi
 
+if [ ! -f "./bin/MBE" ]
+then
+  cd ./baselines || exit
+  if [ ! -d "./MBE" ]
+  then
+    unzip -q MBE.zip
+  fi
+  cd MBE || exit
+  mkdir build
+  cd build || exit
+  cmake ..
+  make 
+  mv MBE ../../../bin/
+  cd ../../../
+fi
+
 if [ ! -f "./bin/mbbp" ]
 then
   cd ./baselines || exit
@@ -62,15 +78,24 @@ dataset_num=${#dataset_names[@]}
 result_file="./scripts/results.txt"
 progress_file="./scripts/progress.txt"
 cur_time=$(date "+%Y-%m-%d %H:%M:%S")
-echo $cur_time "Generating fig-6. The expected time is 24000s." | tee -a $progress_file
+echo $cur_time "Generating fig-6. The expected time is 350000s." | tee -a $progress_file
 data_file=./fig/fig-6/fig-6.data
 rm $data_file
-echo "# Serie oombe parmbe gmbe" >> $data_file
+echo "# Serie mbea imbea pmbe oombe parmbe gmbe" >> $data_file
 for ((i=0;i<dataset_num;i++)) 
 do
   dataset_name=${dataset_names[i]}
   dataset_abb=${dataset_abbs[i]}
   printf "%s " "$dataset_abb" >> $data_file
+  cur_time=$(date "+%Y-%m-%d %H:%M:%S")
+  echo $cur_time "Running MBEA on dataset" ${dataset_name} | tee -a $progress_file
+  ./bin/MBE -i ./datasets/${dataset_name}.adj -s 0 | tee -a ${result_file} | grep "Total processing time" | grep "[0-9.]*" -o | awk 'NR<=1 {printf "%s ", $0 }' >>$data_file 
+  cur_time=$(date "+%Y-%m-%d %H:%M:%S")
+  echo $cur_time "Running iMBEA on dataset" ${dataset_name} | tee -a $progress_file
+  ./bin/MBE -i ./datasets/${dataset_name}.adj -s 1 | tee -a ${result_file} | grep "Total processing time" | grep "[0-9.]*" -o | awk 'NR<=1 {printf "%s ", $0 }' >>$data_file 
+  cur_time=$(date "+%Y-%m-%d %H:%M:%S")
+  echo $cur_time "Running PMBE on dataset" ${dataset_name} | tee -a $progress_file
+  ./bin/MBE -i ./datasets/${dataset_name}.adj -s 2 | tee -a ${result_file} | grep "Total processing time" | grep "[0-9.]*" -o | awk 'NR<=1 {printf "%s ", $0 }' >>$data_file 
   cur_time=$(date "+%Y-%m-%d %H:%M:%S")
   echo $cur_time "Running ooMBEA on dataset" ${dataset_name} | tee -a $progress_file
   ./bin/mbbp "./datasets/${dataset_name}.graph" | tee -a ${result_file} | grep "Total processing time" | grep '[0-9.]*' -o | awk 'NR<=1 {printf "%s ", $0 }' >> $data_file 

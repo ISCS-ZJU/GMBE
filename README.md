@@ -22,10 +22,10 @@ state-of-the-art parallel MBE algorithm PARMBE on a 96-core CPU machine.
 A machine with GPUs.
 ## Software Dependencies
 - GNU Make 4.2.1
-- cmake 3.22.0
+- CMake 3.22.0
 - CUDA toolkit 11.7
-- gcc/g++ 10.3.0
-- python 2.7.18
+- GCC/G++ 10.3.0
+- Python 2.7.18
 - Python packages: zplot 1.41, pathlib 1.0.1
 - C++ library: libtbb-dev 2020.1-2
 ## Compiling
@@ -42,7 +42,9 @@ bash ./scripts/compile-GMBE.sh [GPU_TYPE]
 
 ## Dataset preparing
 For convenience, we provide a script to download and preprocess datasets. You can run the following command and you will find 
-the preprocessed datasets under the new directory `datasets/`. 
+the preprocessed datasets under the new directory `datasets/`. You will find two formats of each datasets, one is in adjacency 
+format stored with the extention `.adj`, another one is in edge pairs format stored with the extention `.graph`. The latter one 
+is specifically prepared for ooMBEA and PARMBE.
 ```
 bash ./preprocess/prepare_dataset.sh
 ```
@@ -53,15 +55,13 @@ You can run GMBE with the following command-line options.
 ```
 ./bin/MBE_GPU 
  -i: The path of input dataset file.
- -s: Select one GMBE version to run. 0: GMBE-WARP, 1: GMBE-BLOCK, 2: GMBE-TASK, 3: GMBE-Multi-GPUs
+ -s: Select one GMBE version to run. 0: GMBE-WARP, 1: GMBE-BLOCK, 2: GMBE, 3: GMBE-Multi-GPUs
  -x: Number of GPUs used to run GMBE, only useful in the multi-GPUs version.
  -m: bound_height, default 20.
  -n: bound_size, default 1500.
  -p: Set which to enable printing the exit time of each SM.
  -f: Set which to disable computing the statistical informations of the graph. Recommended to set. 
 ```
-
-
 ## Experimental workflow
 We provide the scripts to generate the experimental results of Figure 6, Figure 8 and Figure 13 in the directory `scripts/`. You can execute the scripts as following.
 ```
@@ -80,12 +80,22 @@ bash ./scripts/gen-fig-10.sh [GPU_TYPE]
 # Running on a machine with a GPU
 bash ./scripts/gen-fig-11.sh [GPU_TYPE]
 
+# Running on three machine with A100, V100 and 2080Ti respectively. It is required to collect all the results in ./fig/fig-12/[GPU_TYPE].data on different machines into ./fig/fig-12/fig-12.data on a specific machine.
+bash ./scripts/gen-fig-12.sh [GPU_TYPE]
+
 # Running on a machine with 8 GPUs
 bash ./scripts/gen-fig-13.sh [GPU_TYPE]
 ```
-We provide the script to generate figures in the directory `fig/`. You can execute the script as following.
+We provide the script to generate figures in the directory `fig/` with the results generated in above. You can execute the script as following.
 ```
 cd fig/
 bash genfig.sh
 ```
 Then you will find the figures under the directory `fig/`.
+
+To generate the experimental result of Table 2, you can execute the script as following.
+```
+# Running on a machine with a GPU
+bash ./scripts/gen-table-2.sh [GPU_TYPE]
+```
+Then you will find the experimental result under the directory `table`.
