@@ -1,6 +1,6 @@
 ## Abstract
 
-You can reproduce all experimental results (in Figure 6-13) with the scripts, which roughly match the figures from the paper. We provide scripts for Figure 6, Figure 8-11, and Figure 13. By default, scripts for Figure 6 and Figure 8-11 run on a machine with an NVIDIA A100 GPU. The script for Figure 13 runs on a machine with 8 NVIDIA V100 GPUs. Since Figure 7 is based on our empirical estimation of memory requirement,  we will detail it soon. Figure 12 shows the adaptability of GMBE on different GPUs. You may manually run GMBE on different GPUs and generate Figure 12 refer to the script for Figure 6.
+You can reproduce all experimental results (in Figure 6-13 and Table 2) with the scripts, which roughly match the figures from the paper. By default, scripts for Figures 6-11 and Table 2 run on a machine with an NVIDIA A100 GPU. The script for Figure 12 runs on an NVIDIA A100 GPU, an NVIDIA V100 GPU, and an NVIDIA 2080Ti GPU respectively. The script for Figure 13 runs on a machine with 8 NVIDIA V100 GPUs. Figure 7 is based on our empirical estimation of memory requirement, we will detail it as follows. 
 
 ## Generation for Figure 7
 
@@ -38,4 +38,4 @@ Considering that each SM in GPUs will run WarpPerSM procedures simultaneously, G
 | BookCrossing | BX | 340523 | 105278 | 1149739 | 13601 | 53915 | 6347.197703 | 1.31698278 |
 | Github | GH | 120867 | 59519 | 400237 | 884 | 15994 | 103.1320141 | 0.34779544 |
 
-Thus, we can generate Figure 7 in our paper using the statistics in the table above. 
+Thus, we can generate Figure 7 in our paper using the statistics in the table above. For instance, GMBE-W/O-REUSE requires ((16528 + 7601 + 2 × 71154) + 146 × (146 + 3217) × 108 × 16) × **sizeof(int)** B = 3.394443924 GB on the MovieLens dataset. GMBE requires ((16528 + 7601 + 2 × 71154) + (2 × 146 + 3 × 3217) × 108 × 16) × **sizeof(int)** B = 0.069391764 GB on the MovieLens dataset.

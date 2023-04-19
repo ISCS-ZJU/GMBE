@@ -2,6 +2,7 @@
 *.pdf
 baselines/cohesive_subgraph_bipartite
 baselines/parallel-mbe
+baselines/MBE
 bin
 datasets
 scripts/progress.txt
