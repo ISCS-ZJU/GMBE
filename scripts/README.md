@@ -38,4 +38,4 @@ Considering that each SM in GPUs will run WarpPerSM procedures simultaneously, G
 | BookCrossing | BX | 340523 | 105278 | 1149739 | 13601 | 53915 | 6347.197703 | 1.31698278 |
 | Github | GH | 120867 | 59519 | 400237 | 884 | 15994 | 103.1320141 | 0.34779544 |
 
-Thus, we can generate Figure 7 in our paper using the statistics in the table above. 
+Thus, we can generate Figure 7 in our paper using the statistics in the table above. For instance, GMBE-W/O-REUSE requires ((16528 + 7601 + 2 × 71154) + 146 × (146 + 3217) × 108 × 16) × **sizeof(int)** B = 3.394443924 GB on the MovieLens dataset. GMBE requires ((16528 + 7601 + 2 × 71154) + (2 × 146 + 3 × 3217) × 108 × 16) × **sizeof(int)** B = 0.069391764 GB on the MovieLens dataset.
