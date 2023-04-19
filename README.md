@@ -63,10 +63,13 @@ You can run GMBE with the following command-line options.
  -f: Set which to disable computing the statistical informations of the graph. Recommended to set. 
 ```
 ## Experimental workflow
-We provide the scripts to generate the experimental results of Figure 6, Figure 8-13 and Table 2 in the directory `scripts/`. You can execute the scripts as following.
+We provide the scripts to generate the experimental results of Figure 6-13 and Table 2 in the directory `scripts/`. You can execute the scripts as following.
 ```
 # Running on a machine with a 96-core CPU and a GPU
 bash ./scripts/gen-fig-6.sh [GPU_TYPE]
+
+# Running on any machine
+bash ./scripts/gen-fig-7.sh
 
 # Running on a machine with a GPU
 bash ./scripts/gen-fig-8.sh [GPU_TYPE]
