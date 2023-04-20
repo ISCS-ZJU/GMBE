@@ -67,8 +67,8 @@ bartypes = [('solid', 1, 4),
 
 # series_list = ['gmbea100', 'gmbev100', 'gmbe2080ti', 'parmbe', 'oombe']
 # series_name = ['GMBE-A100', 'GMBE-V100','GMBE-2080Ti','parMBE','ooMBEA']
-series_list = ['oombe','parmbe', 'gmbe']
-series_name = ['ooMBEA','parMBE','GMBE']
+series_list = ['mbea', 'imbea', 'pmbe', 'oombe','parmbe', 'gmbe']
+series_name = ['MBEA', 'iMBEA', 'PMBE', 'ooMBEA','parMBE','GMBE']
 bgcolors    = ['white', 'silver', 'white', 'white', 'white','lightgrey', 'lightgrey', 'black']
 fillcolors  = fig_colors
 temp = fillcolors[0]
